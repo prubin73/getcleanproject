@@ -8,7 +8,7 @@ output: pdf_document
 This file documents how the data for the course
 project in ["Getting and Cleaning Data"](https://class.coursera.org/getdata-010) (Coursera, section 10, January 2015) was obtained.
 
-To execute the code here, first modify the working directory in the setwd() command as appropriate, then run or knit the document. Note that the R commands to download and unzip the file are "commented out" ("eval = false") to avoid wasting time and bandwidth. To run the full script, including the download, remove the "eval = false" option from those two chunks.
+To execute the code here, first modify the working directory in the `setwd()` command as appropriate, then run or knit the document. Note that the R commands to download and unzip the file are "commented out" (`eval = false`) to avoid wasting time and bandwidth. To run the full script, including the download, remove the `eval = false` option from those two chunks.
 
 The date the data was obtained is shown above.
 
