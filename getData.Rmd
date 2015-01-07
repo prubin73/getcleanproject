@@ -1,0 +1,46 @@
+---
+title: "Obtaining the Raw Data"
+author: "Paul A. Rubin"
+date: "01/06/2015"
+output: pdf_document
+---
+
+This file documents how the data for the course
+project in ["Getting and Cleaning Data"](https://class.coursera.org/getdata-010) (Coursera, section 10, January 2015) was obtained.
+
+To execute the code here, first modify the working directory in the setwd() command as appropriate, then run or knit the document. Note that the R commands to download and unzip the file are "commented out" ("eval = false") to avoid wasting time and bandwidth. To run the full script, including the download, remove the "eval = false" option from those two chunks.
+
+The date the data was obtained is shown above.
+
+# Steps to obtain the data:
+
+First, change to the working directory (previously created).
+
+```{r}
+setwd("~/Desktop/project")
+```
+
+Next, set the URL based on the project instructions.
+
+```{r}
+dataURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+```
+
+Now download the file.
+
+```{r, eval=FALSE}
+download.file(dataURL, destfile = "data.zip", method = "curl")
+```
+
+Unzip the file into the 'data' subdirectory of
+the working directory (creating it if necessary).
+
+```{r, eval=FALSE}
+unzip("data.zip", exdir = "data", setTimes = TRUE)
+```
+
+Confirm the contents of the data directory.
+
+```{r}
+list.files(path = "data", recursive = TRUE, all.files = TRUE)
+```
