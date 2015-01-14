@@ -1,0 +1,97 @@
+#
+# Script to fulfill the instructions of the term project in "Getting
+# and Cleaning Data" (Coursera, January 2015).
+#
+# Requirements:
+#
+#   1. Merge the training and the test sets to create one data set.
+#   2. Extract only the measurements on the mean and standard deviation
+#      for each measurement. 
+#   3. Use descriptive activity names to name the activities in the data
+#      set.
+#   4. Appropriately label the data set with descriptive variable names.
+#   5. From the data set in step 4, create a second, independent tidy data
+#      set with the average of each variable for each activity and each
+#      subject.
+#
+# Load required libraries.
+#
+library(dplyr)
+#
+# Specify the paths to the raw data files. UPDATE THIS AS NECESSARY before
+# running the script. Be sure to end directories with slashes.
+#
+parentDataDirectory <- "../UCI HAR Dataset/"
+trainingDirectory <- "train/"
+testingDirectory <- "test/"
+testX <- "X_test.txt"                # testing set features
+testY <- "y_test.txt"                # testing set labels
+testSubject <- "subject_test.txt"    # testing set subject IDs
+trainX <- "X_train.txt"              # training set features
+trainY <- "y_train.txt"              # training set labels
+trainSubject <- "subject_train.txt"  # training set subject IDs
+features <- "features.txt"           # feature names
+#
+# Read in the feature names (from the parent directory).
+#
+featureNames <- paste0(parentDataDirectory, features) %>%
+                  # source file
+                read.table                            %>%
+                  # read the feature names
+                getElement(2)                         %>%
+                  # omit the first (index) column
+                as.vector
+                  # turn it into a vector
+#
+# Define a function to load raw data and glue it into one database.
+#
+# Arguments:
+#   directory = path to the data
+#   features = name of the feature data file
+#   labels   = name of the label date file
+#   subjects = name of the subject data file
+#   fnames   = names to assign to the features
+#              (default: global variable "featureNames")
+#   lname    = name to assign to the label variable (default: "Label")
+#   sname    = name to assign to the subject variable (default: "Subject")
+#
+# Value:
+#   a data frame tbl containing features, label and subject id for
+#   each record
+#
+loadRawData <- function(directory, features, labels, subjects,
+                        fnames = featureNames, lname = "Label",
+                        sname = "Subject") {
+  x <- read.table(paste0(directory, features), col.names = fnames)
+  y <- read.table(paste0(directory, labels), col.names = lname)
+  s <- read.table(paste0(directory, subjects), col.names = sname)
+  # make sure dimensions match
+  if (nrow(x) != nrow(y) || nrow(x) != nrow(s)) {
+    stop("Dimension mismatch in training data.")    
+  }
+  # bind it all into one dataframe and wrap it in a tbl
+  tbl_df(cbind(x, y, s))
+}
+#
+# Load the raw training data.
+#
+rawTrain <- loadRawData(paste0(parentDataDirectory, trainingDirectory),
+                        trainX,
+                        trainY,
+                        trainSubject)
+#
+# Load the raw testing data.
+#
+rawTest <- loadRawData(paste0(parentDataDirectory, testingDirectory),
+                       testX,
+                       testY,
+                       testSubject)
+#
+# Combine them into a single tbl_df, adding a variable ("Source")to designate
+# whether each observation is training or testing data.
+#
+rawTrain <- rawTrain %>% mutate(Source = "train")
+rawTest <- rawTest %>% mutate(Source = "test")
+raw <- rbind_list(rawTrain, rawTest)
+rm(rawTrain, rawTest)  # free up memory
+
