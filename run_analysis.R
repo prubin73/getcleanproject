@@ -17,9 +17,11 @@
 # Load required libraries.
 #
 library(dplyr)
+library(tidyr)
 #
-# Specify the paths to the raw data files. UPDATE THIS AS NECESSARY before
-# running the script. Be sure to end directories with slashes.
+# UPDATE THIS SECTION BEFORE RUNNING THE SCRIPT. This section contains
+# file paths and names and other variables that you as a user might
+# want or need to change. Be sure to end directories with slashes.
 #
 parentDataDirectory <- "../UCI HAR Dataset/"
 trainingDirectory <- "train/"
@@ -31,6 +33,8 @@ trainX <- "X_train.txt"              # training set features
 trainY <- "y_train.txt"              # training set labels
 trainSubject <- "subject_train.txt"  # training set subject IDs
 features <- "features.txt"           # feature names
+subjectName <- "Subject"             # name to use for subject ID
+labelName <- "Label"                 # name to use for label variable
 #
 # Read in the feature names (from the parent directory).
 #
@@ -52,19 +56,16 @@ featureNames <- paste0(parentDataDirectory, features) %>%
 #   subjects = name of the subject data file
 #   fnames   = names to assign to the features
 #              (default: global variable "featureNames")
-#   lname    = name to assign to the label variable (default: "Label")
-#   sname    = name to assign to the subject variable (default: "Subject")
 #
 # Value:
 #   a data frame tbl containing features, label and subject id for
 #   each record
 #
 loadRawData <- function(directory, features, labels, subjects,
-                        fnames = featureNames, lname = "Label",
-                        sname = "Subject") {
+                        fnames = featureNames) {
   x <- read.table(paste0(directory, features), col.names = fnames)
-  y <- read.table(paste0(directory, labels), col.names = lname)
-  s <- read.table(paste0(directory, subjects), col.names = sname)
+  y <- read.table(paste0(directory, labels), col.names = labelName)
+  s <- read.table(paste0(directory, subjects), col.names = subjectName)
   # make sure dimensions match
   if (nrow(x) != nrow(y) || nrow(x) != nrow(s)) {
     stop("Dimension mismatch in training data.")    
@@ -94,4 +95,14 @@ rawTrain <- rawTrain %>% mutate(Source = "train")
 rawTest <- rawTest %>% mutate(Source = "test")
 raw <- rbind_list(rawTrain, rawTest)
 rm(rawTrain, rawTest)  # free up memory
-
+#
+# Retain only variables containing means and standard deviations of
+# measurements (along with subject id, label and source).
+#
+raw <- select(raw,
+              matches(labelName),       # label variable
+              matches(subjectName),     # subject ID
+              Source,                   # train or test?
+              contains("mean"),        # measurement mean
+              contains("std")          # measurement std. dev.
+              )
