@@ -74,6 +74,9 @@ loadRawData <- function(directory, features, labels, subjects,
   tbl_df(cbind(x, y, s))
 }
 #
+# Step 0: Load the data.
+#
+#
 # Load the raw training data.
 #
 rawTrain <- loadRawData(paste0(parentDataDirectory, trainingDirectory),
@@ -88,16 +91,17 @@ rawTest <- loadRawData(paste0(parentDataDirectory, testingDirectory),
                        testY,
                        testSubject)
 #
-# Combine them into a single tbl_df, adding a variable ("Source")to designate
-# whether each observation is training or testing data.
+# Step 1: Combine the samples into a single tbl_df, adding a variable
+# ("Source")to designate whether each observation is training or
+# testing data.
 #
 rawTrain <- rawTrain %>% mutate(Source = "train")
 rawTest <- rawTest %>% mutate(Source = "test")
 raw <- rbind_list(rawTrain, rawTest)
 rm(rawTrain, rawTest)  # free up memory
 #
-# Retain only variables containing means and standard deviations of
-# measurements (along with subject id, label and source).
+# Step 2: Retain only variables containing means and standard deviations
+# of measurements (along with subject id, label and source).
 #
 raw <- select(raw,
               matches(labelName),       # label variable

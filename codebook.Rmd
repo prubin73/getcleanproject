@@ -1,0 +1,9 @@
+---
+title: "Code book"
+author: "Paul A. Rubin"
+date: "01/14/2015"
+output: html_document
+---
+
+This code book describes the variables in the data frames produced by the `run_analysis.R` script.
+

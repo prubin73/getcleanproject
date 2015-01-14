@@ -2,14 +2,19 @@
 title: "Obtaining the Raw Data"
 author: "Paul A. Rubin"
 date: "01/06/2015"
-output: pdf_document
+output: html_document
 ---
 
 This file documents how the data for the course
 project in ["Getting and Cleaning Data"](https://class.coursera.org/getdata-010) (Coursera, section 10, January 2015) was obtained.
 
-To execute the code here, first modify the working directory in the `setwd()` command as appropriate, then run or knit the document. Note that the R commands to download and unzip the file are "commented out" (`eval = false`) to avoid wasting time and bandwidth. To run the full script, including the download, remove the `eval = false` option from those two chunks.
+To execute the code here, first modify the working directory in the `setwd()` command as appropriate, then run or knit the document. Note that the R chunks are all set not to evaluate by default. To run the script (rather than just knitting it), change the global evaluation option to TRUE in the following chunk.
 
+```{r}
+# decide whether R chunks should be evaluated
+library(knitr)
+opts_chunk$set(eval = FALSE)
+```
 The date the data was obtained is shown above.
 
 # Steps to obtain the data:
@@ -28,14 +33,14 @@ dataURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%2
 
 Now download the file.
 
-```{r, eval=FALSE}
+```{r}
 download.file(dataURL, destfile = "data.zip", method = "curl")
 ```
 
 Unzip the file into the 'data' subdirectory of
 the working directory (creating it if necessary).
 
-```{r, eval=FALSE}
+```{r}
 unzip("data.zip", exdir = "data", setTimes = TRUE)
 ```
 
