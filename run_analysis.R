@@ -202,8 +202,18 @@ raw <- raw$Measure                                            %>%
 # (body or gravity).
 #
 raw <- raw$Measure                                  %>%
-       factorize(., ".*Body*", "body", "gravity")   %>%
+       factorize(., ".*Body.*", "body", "gravity")  %>%
        mutate(raw, Source = .)
+#
+# Create factors indicating whether a signal is a 'Jerk' or 'Mag'
+# (magnitude) measurement.
+#
+raw <- raw$Measure                                  %>%
+       factorize(., ".*Jerk.*", TRUE, FALSE)        %>%
+       mutate(raw, Jerk = .)
+raw <- raw$Measure                                  %>%
+       factorize(., ".*Mag.*", TRUE, FALSE)        %>%
+       mutate(raw, Mag = .)
 #
 # Finally, clean up the measure names by removing domain, directions,
 # statistic and any stray punctuation marks, and make it a factor.
