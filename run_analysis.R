@@ -93,6 +93,25 @@ loadRawData <- function(features, labels, subjects,
   tbl_df(cbind(s, y, x))
 }
 #
+# Define a function to do pattern matching on a measure name and
+# return a factor variable based on the matches.
+#
+# Arguments:
+#   names   = character vector of names to check
+#   pattern = regular expression to match
+#   match   = desired factor level (character) if a match occurs
+#   nomatch = desired factor level (character) if a match does not occur
+#
+# Value:
+#   a factor indicating matches/non-matches
+#
+factorize <- function(names, pattern, match, nomatch) {
+  names %>%
+  grepl(pattern, .) %>%
+  ifelse(., match, nomatch) %>%
+  factor
+}
+#
 # Step 0: Load the data.
 #
 #
@@ -108,33 +127,35 @@ rawTest <- loadRawData(testX, testY, testSubject)
 # ("Source")to designate whether each observation is training or
 # testing data.
 #
-rawTrain <- rawTrain %>% mutate(Source = "train")
-rawTest <- rawTest %>% mutate(Source = "test")
+rawTrain <- rawTrain %>% mutate(Sample = "train")
+rawTest <- rawTest %>% mutate(Sample = "test")
 raw <- rbind_list(rawTrain, rawTest)
 rm(rawTrain, rawTest)  # free up memory
 #
 # Step 2: Retain only variables containing means and standard deviations
 # of measurements (along with subject id, label and source).
-# NOTE: Only variables containing "mean()" or "std()" in their names are
-# kept. This eliminates, for example, "angle(tBodyGyroMean,gravityMean)"
-# and "fBodyBodyAccJerkMag-meanFreq()".
+# NOTE: Only variables containing "mean()" or "std()" in their names
+# (case-sensitive) are kept. This eliminates, for example, 
+# "angle(tBodyGyroMean,gravityMean)" and "fBodyBodyAccJerkMag-meanFreq()".
 #
 raw <- select(raw,
               Subject,                  # subject ID
               Activity,                 # activity number
-              Source,                   # train or test?
-              contains("mean."),        # measurement mean
-              contains("std.")          # measurement std. dev.
+              Sample,                   # train or test?
+              contains("mean.", ignore.case = FALSE),
+                                        # measurement mean
+              contains("std.", ignore.case = FALSE)
+                                        # measurement std. dev.
               )
 #
 # Step 3: Make the label variable a factor, using the activity names
-# from the data set. Also make the subject and source variables factors.
+# from the data set. Also make the subject and sample variables factors.
 #
 raw <- mutate(raw,
               Activity = factor(Activity,
-                                     labels = read.table(activities)[, 2]),
-              Source = factor(Source),
-              Subject = factor(Subject))
+                                labels = read.table(activities)[, 2]),
+              Sample = factor(Sample),
+              Subject  = factor(Subject))
 #
 # Step 4: Add descriptive variable names. This is combined with tidying
 # the data.
@@ -142,20 +163,13 @@ raw <- mutate(raw,
 # Partially tidy the data by converting all the measurement data to
 # two variables (Measure and Value).
 #
-raw <- gather(raw, Measure, Value, -c(Subject, Activity, Source))
+raw <- gather(raw, Measure, Value, -c(Subject, Activity, Sample))
 #
 # Create a separate variable for domain (time or frequency)
 #
 raw <- raw$Measure                    %>%
-       grepl("^t", .)                 %>%
-         # compare the first letter of the measure name to 't'
-       ifelse(., "time", "frequency") %>%
-         # measures beginning with 't' are time domain;
-         # those beginning with 'f' are frequency domain
-       factor                         %>%
-         # make the domain a factor
+       factorize(., "^t", "time", "frequency") %>%
        mutate(raw, Domain = .)
-         # add it as a new variable
 #
 # Create a separate variable to capture the relevant direction (X, Y, Z)
 # for each measure. Use NA if no direction is explicit in the name.
@@ -173,15 +187,23 @@ rm(dir)  # clean up
 # Create a separate variable (factor) indicating whether the entry in
 # the value field is a mean or a standard deviation.
 #
-raw <- raw$Measure                             %>% 
-       grepl(".*mean.*", .)                    %>%
-         # match "mean" in the measure name (no match => std. dev.)
-       ifelse(., "mean", "standard_deviation") %>%
-         # change logical values to names
-       factor                                  %>%
-         # make it a factor
+raw <- raw$Measure                                            %>%
+       factorize(., ".*mean.*", "mean", "standard_deviation") %>%
        mutate(raw, Statistic = .)
-         # add it as a variable named "Statistic"
+#
+# Create a variable (factor) indicating the device (accelerometer or
+# gyroscope) producing the signal.
+#
+raw <- raw$Measure                                            %>%
+       factorize(., ".*Gyro.*", "gyroscope", "accelerometer") %>%
+       mutate(raw, Device = .)
+#
+# Create a variable (factor) indicating the source of acceleration signals
+# (body or gravity).
+#
+raw <- raw$Measure                                  %>%
+       factorize(., ".*Body*", "body", "gravity")   %>%
+       mutate(raw, Source = .)
 #
 # Finally, clean up the measure names by removing domain, directions,
 # statistic and any stray punctuation marks, and make it a factor.
