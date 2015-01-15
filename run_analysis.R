@@ -94,7 +94,7 @@ loadRawData <- function(features, labels, subjects,
 }
 #
 # Define a function to do pattern matching on a measure name and
-# return a factor variable based on the matches.
+# return a factor variable with two levels, based on match/no match.
 #
 # Arguments:
 #   names   = character vector of names to check
@@ -110,6 +110,26 @@ factorize <- function(names, pattern, match, nomatch) {
   grepl(pattern, .) %>%
   ifelse(., match, nomatch) %>%
   factor
+}
+#
+# Define a function to do pattern matching on a measure name and
+# return a factor variable with levels equalling a matched substring.
+#
+# Arguments:
+#   names   = character vector of names to check
+#   pattern = regular expression to match (containing exactly one subgroup)
+#
+# Value:
+#   a factor based on the matched subgroups (NA for no match)
+#
+factorize2 <- function(names, pattern) {
+  # replace names with the matching component of the pattern
+  temp <- names %>%
+          sub(pattern, "\\1", .)
+  # if any name does not match, make it NA
+  is.na(temp) <- !grepl(pattern, temp)
+  # convert the result to a factor
+  factor(temp)
 }
 #
 # Step 0: Load the data.
@@ -174,15 +194,9 @@ raw <- raw$Measure                    %>%
 # Create a separate variable to capture the relevant direction (X, Y, Z)
 # for each measure. Use NA if no direction is explicit in the name.
 #
-dir <- raw$Measure                     %>%
-       sub(".*(.)$", "\\1", .)
-         # get the last character of the measure name
-is.na(dir) <- grep("[^XYZ]", dir)
-         #  make any direction other than X, Y or Z a missing value
-raw <- mutate(raw, Direction = factor(dir))
-         # add it as a new variable
-rm(dir)  # clean up
-
+raw <- raw$Measure                     %>%
+       factorize2(., ".*([XYZ])$")     %>%
+       mutate(raw, Direction = .)
 #
 # Create a separate variable (factor) indicating whether the entry in
 # the value field is a mean or a standard deviation.
@@ -213,13 +227,4 @@ raw <- raw$Measure                                  %>%
        mutate(raw, Jerk = .)
 raw <- raw$Measure                                  %>%
        factorize(., ".*Mag.*", TRUE, FALSE)        %>%
-       mutate(raw, Mag = .)
-#
-# Finally, clean up the measure names by removing domain, directions,
-# statistic and any stray punctuation marks, and make it a factor.
-#
-raw$Measure <- raw$Measure                         %>%
-               sub("^[tf]?([A-z]*).*$", "\\1", .)  %>%
-                 # isolate the actual measure name
-               factor
-                 # convert it to a factor
+       mutate(raw, Magnitude = .)
