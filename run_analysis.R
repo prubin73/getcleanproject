@@ -136,6 +136,9 @@ raw <- mutate(raw,
               Source = factor(Source),
               Subject = factor(Subject))
 #
+# Step 4: Add descriptive variable names. This is combined with tidying
+# the data.
+#
 # Partially tidy the data by converting all the measurement data to
 # two variables (Measure and Value).
 #
@@ -165,3 +168,26 @@ is.na(dir) <- grep("[^XYZ]", dir)
 raw <- mutate(raw, Direction = factor(dir))
          # add it as a new variable
 rm(dir)  # clean up
+
+#
+# Create a separate variable (factor) indicating whether the entry in
+# the value field is a mean or a standard deviation.
+#
+raw <- raw$Measure                             %>% 
+       grepl(".*mean.*", .)                    %>%
+         # match "mean" in the measure name (no match => std. dev.)
+       ifelse(., "mean", "standard_deviation") %>%
+         # change logical values to names
+       factor                                  %>%
+         # make it a factor
+       mutate(raw, Statistic = .)
+         # add it as a variable named "Statistic"
+#
+# Finally, clean up the measure names by removing domain, directions,
+# statistic and any stray punctuation marks, and make it a factor.
+#
+raw$Measure <- raw$Measure                         %>%
+               sub("^[tf]?([A-z]*).*$", "\\1", .)  %>%
+                 # isolate the actual measure name
+               factor
+                 # convert it to a factor
