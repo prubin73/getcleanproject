@@ -33,10 +33,16 @@ trainX <- "X_train.txt"              # training set features
 trainY <- "y_train.txt"              # training set labels
 trainSubject <- "subject_train.txt"  # training set subject IDs
 features <- "features.txt"           # feature names
+activities <- "activity_labels.txt"  # activities
 subjectName <- "Subject"             # name to use for subject ID
-labelName <- "Label"                 # name to use for label variable
+labelName <- "Activity"              # name to use for label variable
+############## DEVELOP/DEBUG ONLY - REMOVE WHEN DONE ###############
+trainingDirectory <- "debug/"
+testingDirectory <- "debug/"
+####################################################################
 #
-# Read in the feature names (from the parent directory).
+# Read in the feature names (from the parent directory) and do some
+# minor cleaning of them.
 #
 featureNames <- paste0(parentDataDirectory, features) %>%
                   # source file
@@ -44,8 +50,17 @@ featureNames <- paste0(parentDataDirectory, features) %>%
                   # read the feature names
                 getElement(2)                         %>%
                   # omit the first (index) column
-                as.vector
+                as.vector                             %>%
                   # turn it into a vector
+                gsub("()", "", .)                     %>%
+                  # eliminate empty parenthesis pairs
+                gsub("[(),]", "_", .)                 %>%
+                  # convert any remaining parentheses or commas into
+                  # underscores
+                gsub("__", "_", .)                    %>%
+                  # change consecutive underscores to single underscores
+                gsub("_$", "", .)
+                  # remove terminal underscores
 #
 # Define a function to load raw data and glue it into one database.
 #
@@ -107,6 +122,10 @@ raw <- select(raw,
               matches(labelName),       # label variable
               matches(subjectName),     # subject ID
               Source,                   # train or test?
-              contains("mean"),        # measurement mean
-              contains("std")          # measurement std. dev.
+              contains("mean"),         # measurement mean
+              contains("std")           # measurement std. dev.
               )
+#
+# Make the label variable a factor, using the activity names from the
+# data set.
+#
