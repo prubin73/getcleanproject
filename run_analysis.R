@@ -133,8 +133,11 @@ raw <- select(raw,
               contains("std")           # measurement std. dev.
               )
 #
-# Make the label variable a factor, using the activity names from the
-# data set.
+# Step 3: Make the label variable a factor, using the activity names
+# from the data set. Also make the subject and source variables factors.
 #
-raw <- mutate(raw, Activity = factor(Activity,
-                                     labels = read.table(activities)[, 2]))
+raw <- mutate(raw,
+              Activity = factor(Activity,
+                                     labels = read.table(activities)[, 2]),
+              Source = factor(Source),
+              Subject = factor(Subject))
