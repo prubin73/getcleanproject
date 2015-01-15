@@ -10,7 +10,7 @@
 
 <meta name="author" content="Paul A. Rubin" />
 
-<meta name="date" content="2015-01-07" />
+<meta name="date" content="2015-01-14" />
 
 <title>Repository Contents</title>
 
@@ -64,14 +64,18 @@ img {
 <div id="header">
 <h1 class="title">Repository Contents</h1>
 <h4 class="author"><em>Paul A. Rubin</em></h4>
-<h4 class="date"><em>01/07/2015</em></h4>
+<h4 class="date"><em>01/14/2015</em></h4>
 </div>
 
 
 <p>This repository contains script files and documents for the course project in “Getting and Cleaning Data” (Coursera, section 10, January 2015). The files contained here are as follows:</p>
 <ol style="list-style-type: decimal">
 <li><strong>getData.Rmd</strong> (R Markdown) documents how and when the raw data was downloaded and unpacked. <em>Knit</em> it to obtain an HTML or PDF version and/or to run the embedded script.</li>
-<li><strong>run_analysis.R</strong> (R script) reads and massages the raw data, tidies it up, and extracts a tidy subset containing averages by activity and subject.</li>
+<li><strong>run_analysis.R</strong> (R script) reads and massages the raw data, tidies it up, and extracts a tidy subset containing averages by activity and subject.
+<ul>
+<li>There is a block of lines near the top of the script, clearly marked, that sets names and paths for the input files. Be sure to modify those to match your setup before running the script.<br /></li>
+<li>Only measurements from the original data containing “mean()” or “std()” in their names are retained. This eliminates, for example, “angle(tBodyGyroMean,gravityMean)” and “fBodyBodyAccJerkMag-meanFreq()”. This was an executive decision, given some ambiguity in the instructions.<br /></li>
+</ul></li>
 <li><strong>codebook.Rmd</strong> (R Markdown) is the “code book” documenting the variables contained in data frames produced by the <code>run_analysis.R</code> script.</li>
 </ol>
 
