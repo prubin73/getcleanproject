@@ -26,25 +26,39 @@ library(tidyr)
 #                                                                      #
 ########################################################################
 parentDataDirectory <- "../UCI HAR Dataset/"
-trainingDirectory <- "train/"
-testingDirectory <- "test/"
-testX <- "X_test.txt"                # testing set features
-testY <- "y_test.txt"                # testing set labels
-testSubject <- "subject_test.txt"    # testing set subject IDs
-trainX <- "X_train.txt"              # training set features
-trainY <- "y_train.txt"              # training set labels
-trainSubject <- "subject_train.txt"  # training set subject IDs
-features <- "features.txt"           # feature names
-activities <- "activity_labels.txt"  # activities
+trainingDirectory <- paste0(parentDataDirectory, "train/")
+testingDirectory <- paste0(parentDataDirectory, "test/")
+testX <- paste0(testingDirectory, "X_test.txt")
+                                          # testing set features
+testY <- paste0(testingDirectory, "y_test.txt")
+                                          # testing set labels
+testSubject <- paste0(testingDirectory, "subject_test.txt")
+                                          # testing set subject IDs
+trainX <- paste0(trainingDirectory, "X_train.txt")
+                                          # training set features
+trainY <- paste0(trainingDirectory, "y_train.txt")
+                                          # training set labels
+trainSubject <- paste0(trainingDirectory, "subject_train.txt")
+                                          # training set subject IDs
+features <- paste0(parentDataDirectory, "features.txt")
+                                          # feature names
+activities <- paste0(parentDataDirectory, "activity_labels.txt")
+                                          # activity names
 ############## DEVELOP/DEBUG ONLY - REMOVE WHEN DONE ###############
-trainingDirectory <- "debug/"
-testingDirectory <- "debug/"
+trainingDirectory <- paste0(parentDataDirectory, "debug/")
+testingDirectory <- paste0(parentDataDirectory, "debug/")
+testX <- paste0(testingDirectory, "X_test.txt")
+testY <- paste0(testingDirectory, "y_test.txt")
+testSubject <- paste0(testingDirectory, "subject_test.txt")
+trainX <- paste0(trainingDirectory, "X_train.txt")
+trainY <- paste0(trainingDirectory, "y_train.txt")
+trainSubject <- paste0(trainingDirectory, "subject_train.txt")
 ####################################################################
 #
 # Read in the feature names (from the parent directory) and do some
 # minor cleaning of them.
 #
-featureNames <- paste0(parentDataDirectory, features) %>%
+featureNames <- features                              %>%
                   # source file
                 read.table                            %>%
                   # read the feature names
@@ -65,10 +79,9 @@ featureNames <- paste0(parentDataDirectory, features) %>%
 # Define a function to load raw data and glue it into one database.
 #
 # Arguments:
-#   directory = path to the data
-#   features = name of the feature data file
-#   labels   = name of the label date file
-#   subjects = name of the subject data file
+#   features = name/path of the feature data file
+#   labels   = name/path of the label date file
+#   subjects = name/path of the subject data file
 #   fnames   = names to assign to the features
 #              (default: global variable "featureNames")
 #
@@ -76,11 +89,11 @@ featureNames <- paste0(parentDataDirectory, features) %>%
 #   a data frame tbl containing features, label and subject id for
 #   each record
 #
-loadRawData <- function(directory, features, labels, subjects,
+loadRawData <- function(features, labels, subjects,
                         fnames = featureNames) {
-  x <- read.table(paste0(directory, features), col.names = fnames)
-  y <- read.table(paste0(directory, labels), col.names = "Activity")
-  s <- read.table(paste0(directory, subjects), col.names = "Subject")
+  x <- read.table(features, col.names = fnames)
+  y <- read.table(labels, col.names = "Activity")
+  s <- read.table(subjects, col.names = "Subject")
   # make sure dimensions match
   if (nrow(x) != nrow(y) || nrow(x) != nrow(s)) {
     stop("Dimension mismatch in training data.")    
@@ -94,17 +107,11 @@ loadRawData <- function(directory, features, labels, subjects,
 #
 # Load the raw training data.
 #
-rawTrain <- loadRawData(paste0(parentDataDirectory, trainingDirectory),
-                        trainX,
-                        trainY,
-                        trainSubject)
+rawTrain <- loadRawData(trainX, trainY, trainSubject)
 #
 # Load the raw testing data.
 #
-rawTest <- loadRawData(paste0(parentDataDirectory, testingDirectory),
-                       testX,
-                       testY,
-                       testSubject)
+rawTest <- loadRawData(testX, testY, testSubject)
 #
 # Step 1: Combine the samples into a single tbl_df, adding a variable
 # ("Source")to designate whether each observation is training or
@@ -129,3 +136,5 @@ raw <- select(raw,
 # Make the label variable a factor, using the activity names from the
 # data set.
 #
+raw <- mutate(raw, Activity = factor(Activity,
+                                     labels = read.table(activities)[, 2]))
