@@ -18,11 +18,13 @@
 #
 library(dplyr)
 library(tidyr)
-#
-# UPDATE THIS SECTION BEFORE RUNNING THE SCRIPT. This section contains
-# file paths and names and other variables that you as a user might
-# want or need to change. Be sure to end directories with slashes.
-#
+########################################################################
+#                                                                      #
+# UPDATE THIS SECTION BEFORE RUNNING THE SCRIPT. This section contains #
+# file paths and names that you as a user might need to change.        #
+# Be sure to end directories with slashes.                             #
+#                                                                      #
+########################################################################
 parentDataDirectory <- "../UCI HAR Dataset/"
 trainingDirectory <- "train/"
 testingDirectory <- "test/"
@@ -34,8 +36,6 @@ trainY <- "y_train.txt"              # training set labels
 trainSubject <- "subject_train.txt"  # training set subject IDs
 features <- "features.txt"           # feature names
 activities <- "activity_labels.txt"  # activities
-subjectName <- "Subject"             # name to use for subject ID
-labelName <- "Activity"              # name to use for label variable
 ############## DEVELOP/DEBUG ONLY - REMOVE WHEN DONE ###############
 trainingDirectory <- "debug/"
 testingDirectory <- "debug/"
@@ -79,14 +79,14 @@ featureNames <- paste0(parentDataDirectory, features) %>%
 loadRawData <- function(directory, features, labels, subjects,
                         fnames = featureNames) {
   x <- read.table(paste0(directory, features), col.names = fnames)
-  y <- read.table(paste0(directory, labels), col.names = labelName)
-  s <- read.table(paste0(directory, subjects), col.names = subjectName)
+  y <- read.table(paste0(directory, labels), col.names = "Activity")
+  s <- read.table(paste0(directory, subjects), col.names = "Subject")
   # make sure dimensions match
   if (nrow(x) != nrow(y) || nrow(x) != nrow(s)) {
     stop("Dimension mismatch in training data.")    
   }
   # bind it all into one dataframe and wrap it in a tbl
-  tbl_df(cbind(x, y, s))
+  tbl_df(cbind(s, y, x))
 }
 #
 # Step 0: Load the data.
@@ -119,8 +119,8 @@ rm(rawTrain, rawTest)  # free up memory
 # of measurements (along with subject id, label and source).
 #
 raw <- select(raw,
-              matches(labelName),       # label variable
-              matches(subjectName),     # subject ID
+              Subject,                  # subject ID
+              Activity,                 # activity number
               Source,                   # train or test?
               contains("mean"),         # measurement mean
               contains("std")           # measurement std. dev.
