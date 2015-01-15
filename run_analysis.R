@@ -137,6 +137,31 @@ raw <- mutate(raw,
               Subject = factor(Subject))
 #
 # Partially tidy the data by converting all the measurement data to
-# two variables (measure_name and Value).
+# two variables (Measure and Value).
 #
-raw <- gather(raw, measure_name, Value, -c(Subject, Activity, Source))
+raw <- gather(raw, Measure, Value, -c(Subject, Activity, Source))
+#
+# Create a separate variable for domain (time or frequency)
+#
+raw <- raw$Measure                    %>%
+       grepl("^t", .)                 %>%
+         # compare the first letter of the measure name to 't'
+       ifelse(., "time", "frequency") %>%
+         # measures beginning with 't' are time domain;
+         # those beginning with 'f' are frequency domain
+       factor                         %>%
+         # make the domain a factor
+       mutate(raw, Domain = .)
+         # add it as a new variable
+#
+# Create a separate variable to capture the relevant direction (X, Y, Z)
+# for each measure. Use NA if no direction is explicit in the name.
+#
+dir <- raw$Measure                     %>%
+       sub(".*(.)$", "\\1", .)
+         # get the last character of the measure name
+is.na(dir) <- grep("[^XYZ]", dir)
+         #  make any direction other than X, Y or Z a missing value
+raw <- mutate(raw, Direction = factor(dir))
+         # add it as a new variable
+rm(dir)  # clean up
