@@ -64,17 +64,8 @@ featureNames <- features                              %>%
                   # read the feature names
                 getElement(2)                         %>%
                   # omit the first (index) column
-                as.vector                             %>%
+                as.vector
                   # turn it into a vector
-                gsub("()", "", .)                     %>%
-                  # eliminate empty parenthesis pairs
-                gsub("[(),]", "_", .)                 %>%
-                  # convert any remaining parentheses or commas into
-                  # underscores
-                gsub("__", "_", .)                    %>%
-                  # change consecutive underscores to single underscores
-                gsub("_$", "", .)
-                  # remove terminal underscores
 #
 # Define a function to load raw data and glue it into one database.
 #
@@ -124,13 +115,16 @@ rm(rawTrain, rawTest)  # free up memory
 #
 # Step 2: Retain only variables containing means and standard deviations
 # of measurements (along with subject id, label and source).
+# NOTE: Only variables containing "mean()" or "std()" in their names are
+# kept. This eliminates, for example, "angle(tBodyGyroMean,gravityMean)"
+# and "fBodyBodyAccJerkMag-meanFreq()".
 #
 raw <- select(raw,
               Subject,                  # subject ID
               Activity,                 # activity number
               Source,                   # train or test?
-              contains("mean"),         # measurement mean
-              contains("std")           # measurement std. dev.
+              contains("mean."),        # measurement mean
+              contains("std.")          # measurement std. dev.
               )
 #
 # Step 3: Make the label variable a factor, using the activity names
@@ -141,3 +135,8 @@ raw <- mutate(raw,
                                      labels = read.table(activities)[, 2]),
               Source = factor(Source),
               Subject = factor(Subject))
+#
+# Partially tidy the data by converting all the measurement data to
+# two variables (measure_name and Value).
+#
+raw <- gather(raw, measure_name, Value, -c(Subject, Activity, Source))
