@@ -159,13 +159,11 @@ rawTrain <- loadRawData(trainX, trainY, trainSubject)
 #
 rawTest <- loadRawData(testX, testY, testSubject)
 #
-# Step 1: Combine the samples into a single tbl_df, adding a variable
-# ("Source")to designate whether each observation is training or
-# testing data.
+# Step 1: Combine the samples into a single tbl_df. For project purposes,
+# we will ignore whether a given subject was in the training or testing
+# group.
 #
-rawTrain <- rawTrain %>% mutate(Sample = "train")
-rawTest <- rawTest %>% mutate(Sample = "test")
-raw <- rbind_list(rawTrain, rawTest)
+extractedData <- rbind_list(rawTrain, rawTest)
 rm(rawTrain, rawTest)  # free up memory
 #
 # Step 2: Retain only variables containing means and standard deviations
@@ -174,24 +172,23 @@ rm(rawTrain, rawTest)  # free up memory
 # (case-sensitive) are kept. This eliminates, for example, 
 # "angle(tBodyGyroMean,gravityMean)" and "fBodyBodyAccJerkMag-meanFreq()".
 #
-raw <- select(raw,
-              Subject,                  # subject ID
-              Activity,                 # activity number
-              Sample,                   # train or test?
-              contains("mean.", ignore.case = FALSE),
-                                        # measurement mean
-              contains("std.", ignore.case = FALSE)
-                                        # measurement std. dev.
-              )
+extractedData <-
+  select(extractedData,
+         Subject,                                 # subject ID
+         Activity,                                # activity number
+         contains("mean.", ignore.case = FALSE),  # measurement mean
+         contains("std.", ignore.case = FALSE)    # measurement std. dev.
+         )
 #
 # Step 3: Make the label variable a factor, using the activity names
 # from the data set. Also make the subject and sample variables factors.
 #
-raw <- mutate(raw,
-              Activity = factor(Activity,
-                                labels = read.table(activities)[, 2]),
-              Sample = factor(Sample),
-              Subject  = factor(Subject))
+extractedData <- 
+  mutate(extractedData,
+         Activity = factor(Activity,
+                           labels = read.table(activities)[, 2]),
+         Subject  = factor(Subject)
+         )
 #
 # Step 4: Add descriptive variable names. This is combined with tidying
 # the data.
@@ -199,54 +196,64 @@ raw <- mutate(raw,
 # Partially tidy the data by converting all the measurement data to
 # two variables (Measure and Value).
 #
-raw <- gather(raw, Measure, Value, -c(Subject, Activity, Sample))
+extractedData <-
+  gather(extractedData, Measure, Value, -c(Subject, Activity))
 #
 # Create a separate variable for domain (time or frequency)
 #
-raw <- raw$Measure                    %>%
-       factorize(., "^t", "time", "frequency") %>%
-       mutate(raw, Domain = .)
+extractedData <-
+  extractedData$Measure                    %>%
+  factorize(., "^t", "time", "frequency")  %>%
+  mutate(extractedData, Domain = .)
 #
 # Create a separate variable to capture the relevant direction (X, Y, Z)
 # for each measure. Use NA if no direction is explicit in the name.
 #
-raw <- raw$Measure                 %>%
-       factorize2(., "[XYZ]$")     %>%
-       mutate(raw, Direction = .)
+extractedData <- 
+  extractedData$Measure       %>%
+  factorize2(., "[XYZ]$")     %>%
+  mutate(extractedData, Direction = .)
 #
 # Create a separate variable (factor) indicating whether the entry in
 # the value field is a mean or a standard deviation.
 #
-raw <- raw$Measure                                            %>%
-       factorize(., ".*mean.*", "mean", "standard_deviation") %>%
-       mutate(raw, Statistic = .)
+extractedData <-
+  extractedData$Measure                                  %>%
+  factorize(., ".*mean.*", "mean", "standard_deviation") %>%
+  mutate(extractedData, Statistic = .)
 #
 # Create a variable (factor) indicating the device (accelerometer or
 # gyroscope) producing the signal.
 #
-raw <- raw$Measure                                            %>%
-       factorize(., ".*Gyro.*", "gyroscope", "accelerometer") %>%
-       mutate(raw, Device = .)
+extractedData <-
+  extractedData$Measure                                  %>%
+  factorize(., ".*Gyro.*", "gyroscope", "accelerometer") %>%
+  mutate(extractedData, Device = .)
 #
 # Create a variable (factor) indicating the source of acceleration signals
 # (body, 'bodybody' or gravity).
 #
-raw <- raw$Measure                       %>%
-       factorize2(., "(Body)+|Gravity")  %>%
-       mutate(raw, Source = .)
+extractedData <-
+  extractedData$Measure               %>%
+  factorize2(., "(Body)+|Gravity")    %>%
+  mutate(extractedData, Source = .)
 #
 # Create factors indicating whether a signal is a 'Jerk' or 'Mag'
 # (magnitude) measurement.
 #
-raw <- raw$Measure                                  %>%
-       factorize(., ".*Jerk.*", TRUE, FALSE)        %>%
-       mutate(raw, Jerk = .)
-raw <- raw$Measure                                  %>%
-       factorize(., ".*Mag.*", TRUE, FALSE)         %>%
-       mutate(raw, Magnitude = .)
+extractedData <-
+  extractedData$Measure                        %>%
+  factorize(., ".*Jerk.*", TRUE, FALSE)        %>%
+  mutate(extractedData, Jerk = .)
+extractedData <-
+  extractedData$Measure                        %>%
+  factorize(., ".*Mag.*", TRUE, FALSE)         %>%
+  mutate(extractedData, Magnitude = .)
 #
 # Reorder the variables in a somewhat arbitrary but more logical (?)
 # manner, while dropping the now redundant "Measure" variable.
 #
-raw <- select(raw, Subject, Sample, Activity, Source, Device,
-                   Domain, Direction, Jerk, Magnitude, Statistic, Value)
+extractedData <-
+  select(extractedData,
+         Subject, Activity, Source, Device, Domain,
+         Direction, Jerk, Magnitude, Statistic, Value)

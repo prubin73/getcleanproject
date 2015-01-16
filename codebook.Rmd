@@ -1,9 +1,24 @@
 ---
 title: "Code book"
 author: "Paul A. Rubin"
-date: "01/14/2015"
+date: "01/16/2015"
 output: html_document
 ---
 
-This code book describes the variables in the data frames produced by the `run_analysis.R` script.
+This code book describes the variables in the data frames produced by the `run_analysis.R` script. The reader is referred to the local "getData.Rmd" document for an explanation of when and how the data was downloaded, and to the [Human Activity Recognition Using Smartphones Data Set](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones) web page for more details about the source data.
 
+The `run_analysis.R` script generates two datasets, both documented here. The first (a dataframe named `extractedData`) is a subset of the UCI data; the second (a dataframe named ???, exported to a text file of the same name) contains summary statistics for the first.
+
+## Notes about the extracted data
+* Only features representing means or standard deviations were extracted.
+* Among those features representing means, only the ones paired with a corresponding standard deviation were extracted. Thus `fBodyGyro-mean()-X` and `fBodyGyro-std()-X` were extracted, but neither `fBodyAccJerk-meanFreq()-X` nor `angle(tBodyGyroMean,gravityMean)` were extracted (there being no corresponding standard deviation feature for either).
+* A total of 33 features of each type (means, standard deviations) were extracted.
+* Subjects were split between training and testing samples. Those two samples are merged in the extracted data, with no indication of which sample contained each subject. (The subject-sample pairing does not belong in the same table as the extracted data. A separate table for it would be trivial to construct.)
+
+# Extracted Data
+
+The extracted data set contains 10 factor variables and one numeric variable (**Value**).
+
+Variable | Description
+---------|------------
+Subject | the identifying number (1-30) for the subject that produced the observation
