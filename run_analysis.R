@@ -112,6 +112,23 @@ factorize <- function(names, pattern, match, nomatch) {
   factor
 }
 #
+# Define a function to apply a regex pattern to a single string and
+# return the matching portion (or NA if no match occurs).
+#
+# Arguments:
+#   text = the string to test
+#   pat  = the pattern to apply
+#
+# Value:
+#   A character vector (string) containing the matching text, if any.
+#
+patternMatch <- function(text, pat) {
+  m <- regexpr(pat, text)  %>%
+       regmatches(text, .)
+  m <- ifelse(length(m) == 0, NA, m)
+  m
+}
+#
 # Define a function to do pattern matching on a measure name and
 # return a factor variable with levels equalling a matched substring.
 #
@@ -123,11 +140,10 @@ factorize <- function(names, pattern, match, nomatch) {
 #   a factor based on the matched subgroups (NA for no match)
 #
 factorize2 <- function(names, pattern) {
-  # replace names with the matching component of the pattern
-  temp <- names %>%
-          sub(pattern, "\\1", .)
-  # if any name does not match, make it NA
-  is.na(temp) <- !grepl(pattern, temp)
+  # find the matching component of the pattern in each name
+  temp <- sapply(names,
+                 function(x) patternMatch(x, pattern),
+                 USE.NAMES = FALSE)
   # convert the result to a factor
   factor(temp)
 }
@@ -194,8 +210,8 @@ raw <- raw$Measure                    %>%
 # Create a separate variable to capture the relevant direction (X, Y, Z)
 # for each measure. Use NA if no direction is explicit in the name.
 #
-raw <- raw$Measure                     %>%
-       factorize2(., ".*([XYZ])$")     %>%
+raw <- raw$Measure                 %>%
+       factorize2(., "[XYZ]$")     %>%
        mutate(raw, Direction = .)
 #
 # Create a separate variable (factor) indicating whether the entry in
@@ -213,10 +229,10 @@ raw <- raw$Measure                                            %>%
        mutate(raw, Device = .)
 #
 # Create a variable (factor) indicating the source of acceleration signals
-# (body or gravity).
+# (body, 'bodybody' or gravity).
 #
-raw <- raw$Measure                                  %>%
-       factorize(., ".*Body.*", "body", "gravity")  %>%
+raw <- raw$Measure                       %>%
+       factorize2(., "(Body)+|Gravity")  %>%
        mutate(raw, Source = .)
 #
 # Create factors indicating whether a signal is a 'Jerk' or 'Mag'
@@ -226,5 +242,11 @@ raw <- raw$Measure                                  %>%
        factorize(., ".*Jerk.*", TRUE, FALSE)        %>%
        mutate(raw, Jerk = .)
 raw <- raw$Measure                                  %>%
-       factorize(., ".*Mag.*", TRUE, FALSE)        %>%
+       factorize(., ".*Mag.*", TRUE, FALSE)         %>%
        mutate(raw, Magnitude = .)
+#
+# Reorder the variables in a somewhat arbitrary but more logical (?)
+# manner, while dropping the now redundant "Measure" variable.
+#
+raw <- select(raw, Subject, Sample, Activity, Source, Device,
+                   Domain, Direction, Jerk, Magnitude, Statistic, Value)
