@@ -230,13 +230,13 @@ extractedData <-
   factorize(., ".*Gyro.*", "gyroscope", "accelerometer") %>%
   mutate(extractedData, Device = .)
 #
-# Create a variable (factor) indicating the source of acceleration signals
+# Create a variable (factor) indicating the component of acceleration signals
 # (body, 'bodybody' or gravity).
 #
 extractedData <-
   extractedData$Measure               %>%
   factorize2(., "(Body)+|Gravity")    %>%
-  mutate(extractedData, Source = .)
+  mutate(extractedData, Component = .)
 #
 # Create factors indicating whether a signal is a 'Jerk' or 'Mag'
 # (magnitude) measurement.
@@ -255,5 +255,5 @@ extractedData <-
 #
 extractedData <-
   select(extractedData,
-         Subject, Activity, Source, Device, Domain,
+         Subject, Activity, Component, Device, Domain,
          Direction, Jerk, Magnitude, Statistic, Value)
