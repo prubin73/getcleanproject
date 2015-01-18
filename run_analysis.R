@@ -259,13 +259,17 @@ extractedData <-
          Direction, Jerk, Magnitude, Statistic, Value)
 #
 # Step 5: Summarize the data, producing a mean value of each measure
-# for each combination of subject and activity.
+# for each combination of subject and activity. Note: the grouping is
+# removed at the end of the command, because it interferes with the
+# select() function if the user wants to extract specific entries
+# from the table.
 #
 groupMeans <-
   extractedData                                            %>%
   group_by(Subject, Activity, Component, Device, Domain,
            Direction, Jerk, Magnitude, Statistic)          %>%
-  summarise(Mean = mean(Value))
+  summarise(Mean = mean(Value))                            %>%
+  ungroup
 #
 # Write the summary table to a text file.
 #

@@ -7,19 +7,19 @@ output: html_document
 
 This code book describes the variables in the data frames produced by the `run_analysis.R` script. The reader is referred to the local "getData.Rmd" document for an explanation of when and how the data was downloaded, and to the [Human Activity Recognition Using Smartphones Data Set](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones) web page for more details about the source data.
 
-The `run_analysis.R` script generates two datasets, both documented here. The first (a dataframe named `extractedData`) is a subset of the UCI data; the second (a dataframe named ???, exported to a text file of the same name) contains summary statistics for the first.
+The `run_analysis.R` script generates two datasets, both documented here. The first (a dataframe named _extractedData_) is a subset of the UCI data; the second (a dataframe named _groupmeans_, exported to a text file named "groupmeans.txt" in the working directory) contains summary statistics for the first.
 
 ## Notes about the extracted data
 * Only features representing means or standard deviations were extracted.
-* Among those features representing means, only the ones paired with a corresponding standard deviation were extracted. Thus `fBodyGyro-mean()-X` and `fBodyGyro-std()-X` were extracted, but neither `fBodyAccJerk-meanFreq()-X` nor `angle(tBodyGyroMean,gravityMean)` were extracted (there being no corresponding standard deviation feature for either).
+* Among those features representing means, only the ones paired with a corresponding standard deviation were extracted. Thus _fBodyGyro-mean()-X_ and _fBodyGyro-std()-X_ were extracted, but neither _fBodyAccJerk-meanFreq()-X_ nor _angle(tBodyGyroMean,gravityMean)_ were extracted (there being no corresponding standard deviation feature for either).
 * A total of 33 features of each type (means, standard deviations) were extracted.
 * Subjects were split between training and testing samples. Those two samples are merged in the extracted data, with no indication of which sample contained each subject. (The subject-sample pairing does not belong in the same table as the extracted data. A separate table for it would be trivial to construct.)
-* `NA` values are used for factors not relevant to a particular observation. For instance, `tBodyGyroMag-std()` has no X-Y-Z axis, so the `Direction` value for an observation of that feature will be `NA`.
-* Some of the source features contain "BodyBody" in their names, such as `fBodyBodyAccJerkMag-mean()`. There is no explanation on the source web page, and the "features_info.txt" file supplied with the data _seems to suggest_ that these are typographical errors. Nonetheless, they are preserved in the extracted data, so that three acceleration components ("Body", "Gravity" and "BodyBody") are present. The rationale for leaving "BodyBody" alone is to avoid data loss if there is in fact some difference between "Body" and "BodyBody".
+* `NA` values are used for factors not relevant to a particular observation. For instance, _tBodyGyroMag-std()_ has no X-Y-Z axis, so the _Direction_ value for an observation of that feature will be `NA`.
+* Some of the source features contain "BodyBody" in their names, such as _fBodyBodyAccJerkMag-mean()_. There is no explanation on the source web page, and the "features_info.txt" file supplied with the data seems to suggest that these are typographical errors. Nonetheless, they are preserved in the extracted data, so that three acceleration components ("Body", "Gravity" and "BodyBody") are present. The rationale for leaving "BodyBody" alone is to avoid data loss if there is in fact some difference between "Body" and "BodyBody".
 
 # Extracted Data
 
-The extracted data set contains nine factor variables and one numeric variable (**Value**). According to the "README.txt" file accompanying the source data, Value entries have been normalized to the range [-1, 1].
+The extracted data set contains nine factor variables and one numeric variable (*Value*). According to the "README.txt" file accompanying the source data, Value entries have been normalized to the range [-1, 1].
 
 Variable | Description
 ---------|------------
@@ -33,3 +33,37 @@ Jerk | is this a Jerk signal? (TRUE or FALSE)
 Mag | is this the magnitude of a three-dimensional signal vector? (TRUE or FALSE)
 Statistic | is this a mean or a standard deviation?
 Value | the value of the statistic (mean, standard deviation) captured in this observation
+
+# Grouped means
+
+The group mean table contains the mean of each measure across observations of each activity done by each subject. It contains 10 variables, the first nine of which are identical to those of the extracted data. The tenth variable, *Mean*, is the mean of the *Value* variable.
+
+## How to access the grouped means
+
+Assuming that the grouped means are in a `tbl_df` object, and that the `dplyr` package is loaded, means of a specific original variable can be accessed by filtering on the components of the original variable name. (Be sure to specify all seven components, including ones missing from the given variable name.)
+
+### Examples
++ To access means for *tBodyAcc-mean()-X*, use the following code snippet:
+```{r, eval = FALSE}
+groupMeans                           %>%
+  filter(Domain == "time",                  # 't'
+         Component == "Body",               # 'Body'
+         Device == "accelerometer",         # 'Acc'
+         Statistic == "mean",               # 'mean()'
+         Direction == "X",                  # 'X'
+         Jerk == FALSE,                     # 'Jerk' omitted
+         Magnitude == FALSE)         %>%    # 'Mag' omitted
+  select(Subject, Activity, Mean)
+```
++ To access means for *fBodyBodyGyroJerkMag-std()*, use the following:
+```{r, eval = FALSE}
+groupMeans                                   %>%
+  filter(Domain == "frequency",                    # 'f'
+         Component == "BodyBody",                  # 'BodyBody'
+         Device == "gyroscope",                    # 'Gyro'
+         Statistic == "standard_deviation",        # 'std()'
+         Direction == NA,                          # no X, Y or Z
+         Jerk == TRUE,                             # 'Jerk'
+         Magnitude == TRUE)                  %>%   # 'Mag'
+  select(Subject, Activity, Mean)
+```
