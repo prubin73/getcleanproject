@@ -257,3 +257,16 @@ extractedData <-
   select(extractedData,
          Subject, Activity, Component, Device, Domain,
          Direction, Jerk, Magnitude, Statistic, Value)
+#
+# Step 5: Summarize the data, producing a mean value of each measure
+# for each combination of subject and activity.
+#
+groupMeans <-
+  extractedData                                            %>%
+  group_by(Subject, Activity, Component, Device, Domain,
+           Direction, Jerk, Magnitude, Statistic)          %>%
+  summarise(Mean = mean(Value))
+#
+# Write the summary table to a text file.
+#
+write.table(groupMeans, "groupmeans.txt", row.name = FALSE)
