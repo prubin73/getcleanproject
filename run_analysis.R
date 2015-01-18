@@ -2,7 +2,12 @@
 # Script to fulfill the instructions of the term project in "Getting
 # and Cleaning Data" (Coursera, January 2015).
 #
-# Requirements:
+# Script requirements:
+#
+#   1. Libraries "dplyr" and "tidyr" must be installed.
+#   2. The "parseVariable.R" script must be in the working directory.
+#
+# Project requirements:
 #
 #   1. Merge the training and the test sets to create one data set.
 #   2. Extract only the measurements on the mean and standard deviation
@@ -18,6 +23,11 @@
 #
 library(dplyr)
 library(tidyr)
+#
+# Source the parseVariables.R script.
+#
+source("parseVariable.R")
+#
 ########################################################################
 #                                                                      #
 # UPDATE THIS SECTION BEFORE RUNNING THE SCRIPT. This section contains #
@@ -93,61 +103,6 @@ loadRawData <- function(features, labels, subjects,
   tbl_df(cbind(s, y, x))
 }
 #
-# Define a function to do pattern matching on a measure name and
-# return a factor variable with two levels, based on match/no match.
-#
-# Arguments:
-#   names   = character vector of names to check
-#   pattern = regular expression to match
-#   match   = desired factor level (character) if a match occurs
-#   nomatch = desired factor level (character) if a match does not occur
-#
-# Value:
-#   a factor indicating matches/non-matches
-#
-factorize <- function(names, pattern, match, nomatch) {
-  names %>%
-  grepl(pattern, .) %>%
-  ifelse(., match, nomatch) %>%
-  factor
-}
-#
-# Define a function to apply a regex pattern to a single string and
-# return the matching portion (or NA if no match occurs).
-#
-# Arguments:
-#   text = the string to test
-#   pat  = the pattern to apply
-#
-# Value:
-#   A character vector (string) containing the matching text, if any.
-#
-patternMatch <- function(text, pat) {
-  m <- regexpr(pat, text)  %>%
-       regmatches(text, .)
-  m <- ifelse(length(m) == 0, NA, m)
-  m
-}
-#
-# Define a function to do pattern matching on a measure name and
-# return a factor variable with levels equalling a matched substring.
-#
-# Arguments:
-#   names   = character vector of names to check
-#   pattern = regular expression to match (containing exactly one subgroup)
-#
-# Value:
-#   a factor based on the matched subgroups (NA for no match)
-#
-factorize2 <- function(names, pattern) {
-  # find the matching component of the pattern in each name
-  temp <- sapply(names,
-                 function(x) patternMatch(x, pattern),
-                 USE.NAMES = FALSE)
-  # convert the result to a factor
-  factor(temp)
-}
-#
 # Step 0: Load the data.
 #
 #
@@ -180,8 +135,9 @@ extractedData <-
          contains("std.", ignore.case = FALSE)    # measurement std. dev.
          )
 #
-# Step 3: Make the label variable a factor, using the activity names
-# from the data set. Also make the subject and sample variables factors.
+# Step 3: Make the label variable a factor named "Activity", using the
+# activity names from the data set. Also make the subject variable
+# a factor.
 #
 extractedData <- 
   mutate(extractedData,
@@ -199,56 +155,14 @@ extractedData <-
 extractedData <-
   gather(extractedData, Measure, Value, -c(Subject, Activity))
 #
-# Create a separate variable for domain (time or frequency)
+# Parse the variable (feature) names, and create new variables for
+# each component of the names.
 #
 extractedData <-
-  extractedData$Measure                    %>%
-  factorize(., "^t", "time", "frequency")  %>%
-  mutate(extractedData, Domain = .)
-#
-# Create a separate variable to capture the relevant direction (X, Y, Z)
-# for each measure. Use NA if no direction is explicit in the name.
-#
-extractedData <- 
-  extractedData$Measure       %>%
-  factorize2(., "[XYZ]$")     %>%
-  mutate(extractedData, Direction = .)
-#
-# Create a separate variable (factor) indicating whether the entry in
-# the value field is a mean or a standard deviation.
-#
-extractedData <-
-  extractedData$Measure                                  %>%
-  factorize(., ".*mean.*", "mean", "standard_deviation") %>%
-  mutate(extractedData, Statistic = .)
-#
-# Create a variable (factor) indicating the device (accelerometer or
-# gyroscope) producing the signal.
-#
-extractedData <-
-  extractedData$Measure                                  %>%
-  factorize(., ".*Gyro.*", "gyroscope", "accelerometer") %>%
-  mutate(extractedData, Device = .)
-#
-# Create a variable (factor) indicating the component of acceleration signals
-# (body, 'bodybody' or gravity).
-#
-extractedData <-
-  extractedData$Measure               %>%
-  factorize2(., "(Body)+|Gravity")    %>%
-  mutate(extractedData, Component = .)
-#
-# Create factors indicating whether a signal is a 'Jerk' or 'Mag'
-# (magnitude) measurement.
-#
-extractedData <-
-  extractedData$Measure                        %>%
-  factorize(., ".*Jerk.*", TRUE, FALSE)        %>%
-  mutate(extractedData, Jerk = .)
-extractedData <-
-  extractedData$Measure                        %>%
-  factorize(., ".*Mag.*", TRUE, FALSE)         %>%
-  mutate(extractedData, Magnitude = .)
+  extractedData$Measure  %>%
+  parseFeature           %>%  # parse the feature names
+  t                      %>%  # transpose the matrix
+  cbind(extractedData, .)     # bind it with the extracted data
 #
 # Reorder the variables in a somewhat arbitrary but more logical (?)
 # manner, while dropping the now redundant "Measure" variable.
