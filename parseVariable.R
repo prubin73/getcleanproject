@@ -127,7 +127,7 @@ filterFeature <- function(data, feature) {
   filter(data, Component == f["Component"] &
                Device    == f["Device"]    &
                Domain    == f["Domain"]    &
-               Direction == f["Direction"] &
+               (is.na(Direction) | Direction == f["Direction"]) &
                Jerk      == f["Jerk"]      &
                Magnitude == f["Magnitude"] &
                Statistic == f["Statistic"])
