@@ -1,7 +1,7 @@
 ---
 title: "Code book"
 author: "Paul A. Rubin"
-date: "01/16/2015"
+date: "01/19/2015"
 output: html_document
 ---
 
@@ -40,30 +40,21 @@ The group mean table contains the mean of each measure across observations of ea
 
 ## How to access the grouped means
 
-Assuming that the grouped means are in a `tbl_df` object, and that the `dplyr` package is loaded, means of a specific original variable can be accessed by filtering on the components of the original variable name. (Be sure to specify all seven components, including ones missing from the given variable name.)
+Assuming that the grouped means are in a `tbl_df` object, and that the `dplyr` package is loaded, means can be accessed by filtering on the components of the original variable name. To access group means using original feature names, apply the ``filterFeature()`` function to the group means table.
 
 ### Examples
-+ To access means for *tBodyAcc-mean()-X*, use the following code snippet:
++ To access means of standard deviations of accelerometer readings for the "BodyBody" component, use the following code snippet:
 ```{r, eval = FALSE}
-groupMeans                           %>%
-  filter(Domain == "time",                  # 't'
-         Component == "Body",               # 'Body'
-         Device == "accelerometer",         # 'Acc'
-         Statistic == "mean",               # 'mean()'
-         Direction == "X",                  # 'X'
-         Jerk == FALSE,                     # 'Jerk' omitted
-         Magnitude == FALSE)         %>%    # 'Mag' omitted
+groupMeans                                  %>%
+  filter(Domain == "frequency",
+         Component == "BodyBody",
+         Device == "accelerometer",
+         Statistic == "standard_deviation") %>%
   select(Subject, Activity, Mean)
 ```
 + To access means for *fBodyBodyGyroJerkMag-std()*, use the following:
 ```{r, eval = FALSE}
-groupMeans                                   %>%
-  filter(Domain == "frequency",                    # 'f'
-         Component == "BodyBody",                  # 'BodyBody'
-         Device == "gyroscope",                    # 'Gyro'
-         Statistic == "standard_deviation",        # 'std()'
-         Direction == NA,                          # no X, Y or Z
-         Jerk == TRUE,                             # 'Jerk'
-         Magnitude == TRUE)                  %>%   # 'Mag'
+groupMeans                                  %>%
+filterFeature("fBodyBodyGyroJerkMag-std()") %>%
   select(Subject, Activity, Mean)
 ```
