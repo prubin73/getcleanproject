@@ -86,7 +86,7 @@ parseFeatureList <-
 # Arguments:
 #    data      = tbl_df or data.frame to be extended
 #    names     = index of the column containing feature names
-#    table     = feature table (output of parseFeatureList function)
+#    ftable    = feature table (output of parseFeatureList function)
 #    component = the name of the component to be added
 #
 # Value:
@@ -96,12 +96,15 @@ parseFeatureList <-
 # Example:
 #    x <- ...      # data.frame or tbl_df with feature names in column "FN"
 #    t <- parseFeatureList(x[, "FN"])
-#    y <- appendNameComponent(x, "FN", "Domain")
+#    y <- appendNameComponent(x, "FN", t, "Domain")
 #                  # x with "Domain" column added
 #
-appendNameComponent <- function(data, names, table, component) {
+appendNameComponent <- function(data, names, ftable, component) {
   data <-
-    data[, names]                  %>%
-    table[., component]            %>%
-    cbind(data, .)  
+    data[, names]                   %>%  # access the feature names
+    as.data.frame                   %>%  # strip off the tbl_df wrapper
+    getElement(., names)            %>%  # isolate the names column
+    ftable[., component]            %>%  # look up those entries in
+                                         # the feature table
+    cbind(data, .)                       # append the column
 }
