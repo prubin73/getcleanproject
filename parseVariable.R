@@ -108,3 +108,27 @@ appendNameComponent <- function(data, names, ftable, component) {
                                          # the feature table
     cbind(data, .)                       # append the column
 }
+#
+# Function filterFeature extracts from a tbl_df those rows corresponding
+# to a particular original feature. The table must have columns for
+# the factors composing a feature name ("Component", "Device", "Domain",
+# "Direction", "Jerk", "Magnitude" and "Statistic"), consistent with the
+# output of parseFeatureList.
+#
+# Arguments:
+#   data    = tbl_df containing the data
+#   feature = original feature name (e.g., "tBodyAcc-mean()-X")
+#
+# Value:
+#   the subset of 'data' consisting of records for the target feature
+#
+filterFeature <- function(data, feature) {
+  f <- parseFeature(feature)       # parse the feature name
+  filter(data, Component == f["Component"] &
+               Device    == f["Device"]    &
+               Domain    == f["Domain"]    &
+               Direction == f["Direction"] &
+               Jerk      == f["Jerk"]      &
+               Magnitude == f["Magnitude"] &
+               Statistic == f["Statistic"])
+}
