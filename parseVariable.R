@@ -2,6 +2,8 @@
 # This script provides functions to assist in parsing the (rather clunky)
 # variable (feature) names from the UCI source data set.
 #
+library(dplyr)
+#
 # Function patternMatch applies a regex pattern to a single string and
 # return the matching portion (or NA if no match occurs).
 #
@@ -14,7 +16,7 @@
 #
 patternMatch <- function(pat, text) {
   m <- regexpr(pat, text)  %>%
-    regmatches(text, .)
+       regmatches(text, .)
   m <- ifelse(length(m) == 0, NA, m)
   m
 }
@@ -48,4 +50,58 @@ parseFeature <- function(feature) {
                                  "mean",
                                  "standard_deviation")
   factors
+}
+#
+# Function parseFeatureList parses a list of feature names and creates
+# a lookup table for the various name components.
+#
+# Argument:
+#   features = a list or vector of original feature names
+#
+# Value:
+#   a table with one entry for each original feature name
+#
+# Example:
+#   x <- c("tBodyAcc-mean()-X", "fBodyBodyGyroJerkMag-std()")
+#   y <- parseFeatureList(x)
+#   y[["tBodyAcc-mean()-X"]]                        # seven name components
+#   y[["fBodyBodyGyroJerkMag-std()"]]["Component"]  # "BodyBody"
+#   y[["tBodyAcc-mean()-X"]][["Device"]]            # "accelerometer"
+#
+parseFeatureList <-
+  function(features) {
+    f <- unique(features)          # weed out duplicate names
+    result <-
+      f                      %>%
+      sapply(parseFeature)   %>%   # parse each feature name
+      t                      %>%   # transpose the result
+      as.data.frame                # make it a data frame
+    rownames(result) <- f          # use the original names as row names
+    tbl_df(result)                 # return it as a tbl_df
+  }
+#
+# Function appendNameComponent appends a column to a table containing a
+# specified component of the feature names.
+#
+# Arguments:
+#    data      = tbl_df or data.frame to be extended
+#    names     = index of the column containing feature names
+#    table     = feature table (output of parseFeatureList function)
+#    component = the name of the component to be added
+#
+# Value:
+#    a copy of 'data' with a new column containing the designated component
+#    of the feature names (as a factor)
+#
+# Example:
+#    x <- ...      # data.frame or tbl_df with feature names in column "FN"
+#    t <- parseFeatureList(x[, "FN"])
+#    y <- appendNameComponent(x, "FN", "Domain")
+#                  # x with "Domain" column added
+#
+appendNameComponent <- function(data, names, table, component) {
+  data <-
+    data[, names]                  %>%
+    table[., component]            %>%
+    cbind(data, .)  
 }

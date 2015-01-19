@@ -54,16 +54,6 @@ features <- paste0(parentDataDirectory, "features.txt")
                                           # feature names
 activities <- paste0(parentDataDirectory, "activity_labels.txt")
                                           # activity names
-############## DEVELOP/DEBUG ONLY - REMOVE WHEN DONE ###############
-trainingDirectory <- paste0(parentDataDirectory, "debug/")
-testingDirectory <- paste0(parentDataDirectory, "debug/")
-testX <- paste0(testingDirectory, "X_test.txt")
-testY <- paste0(testingDirectory, "y_test.txt")
-testSubject <- paste0(testingDirectory, "subject_test.txt")
-trainX <- paste0(trainingDirectory, "X_train.txt")
-trainY <- paste0(trainingDirectory, "y_train.txt")
-trainSubject <- paste0(trainingDirectory, "subject_train.txt")
-####################################################################
 #
 # Read in the feature names (from the parent directory) and do some
 # minor cleaning of them.
@@ -108,16 +98,19 @@ loadRawData <- function(features, labels, subjects,
 #
 # Load the raw training data.
 #
+message("... loading training data ...")
 rawTrain <- loadRawData(trainX, trainY, trainSubject)
 #
 # Load the raw testing data.
 #
+message("... loading testing data ...")
 rawTest <- loadRawData(testX, testY, testSubject)
 #
 # Step 1: Combine the samples into a single tbl_df. For project purposes,
 # we will ignore whether a given subject was in the training or testing
 # group.
 #
+message("... combining ...")
 extractedData <- rbind_list(rawTrain, rawTest)
 rm(rawTrain, rawTest)  # free up memory
 #
@@ -127,6 +120,7 @@ rm(rawTrain, rawTest)  # free up memory
 # (case-sensitive) are kept. This eliminates, for example, 
 # "angle(tBodyGyroMean,gravityMean)" and "fBodyBodyAccJerkMag-meanFreq()".
 #
+message("... selecting means and standard deviations ...")
 extractedData <-
   select(extractedData,
          Subject,                                 # subject ID
@@ -139,6 +133,7 @@ extractedData <-
 # activity names from the data set. Also make the subject variable
 # a factor.
 #
+message("... adding subject and activity labels ...")
 extractedData <- 
   mutate(extractedData,
          Activity = factor(Activity,
@@ -152,21 +147,27 @@ extractedData <-
 # Partially tidy the data by converting all the measurement data to
 # two variables (Measure and Value).
 #
+message("... gathering features into one variable ...")
 extractedData <-
   gather(extractedData, Measure, Value, -c(Subject, Activity))
 #
-# Parse the variable (feature) names, and create new variables for
-# each component of the names.
 #
+# Create a lookup table that converts original feature names into
+# components (Device, Domain, ...)
+#
+message("... creating feature name conversion table ...")
+featureTable <- parseFeatureList(extractedData$Measure)
+#
+# Create new variables for each component of the feature names.
+#
+message("... parsing feature names into multiple factors ...")
 extractedData <-
-  extractedData$Measure  %>%
-  parseFeature           %>%  # parse the feature names
-  t                      %>%  # transpose the matrix
-  cbind(extractedData, .)     # bind it with the extracted data
+  appendNameComponent(extractedData, "Measure", featureTable, names(featureTable))
 #
 # Reorder the variables in a somewhat arbitrary but more logical (?)
 # manner, while dropping the now redundant "Measure" variable.
 #
+message("... rearranging variable order ...")
 extractedData <-
   select(extractedData,
          Subject, Activity, Component, Device, Domain,
@@ -178,6 +179,7 @@ extractedData <-
 # select() function if the user wants to extract specific entries
 # from the table.
 #
+message("... computing means by subject and activity ...")
 groupMeans <-
   extractedData                                            %>%
   group_by(Subject, Activity, Component, Device, Domain,
@@ -187,4 +189,5 @@ groupMeans <-
 #
 # Write the summary table to a text file.
 #
+message("... writing the group means to a file ...")
 write.table(groupMeans, "groupmeans.txt", row.name = FALSE)
